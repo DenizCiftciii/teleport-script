@@ -1,0 +1,177 @@
+local Players = game:GetService("Players")
+local StarterGui = game:GetService("StarterGui")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+
+local badWords = {
+    "nigg", "fag", "gay", "rape", "retard", "fuck", "shit", "bitch", "kanker", "cunt", "dick", "cock"
+}
+
+local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+screenGui.Name = "TeleportGUI"
+
+local frame = Instance.new("Frame", screenGui)
+frame.Size = UDim2.new(0, 360, 0, 200)
+frame.Position = UDim2.new(0.5, -180, 0.5, -100)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.Active = true
+frame.Draggable = true
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
+
+local closeButton = Instance.new("TextButton", frame)
+closeButton.Size = UDim2.new(0, 30, 0, 30)
+closeButton.Position = UDim2.new(1, -35, 0, 5)
+closeButton.Text = "X"
+closeButton.Font = Enum.Font.GothamBold
+closeButton.TextSize = 20
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+Instance.new("UICorner", closeButton).CornerRadius = UDim.new(0, 6)
+
+closeButton.MouseButton1Click:Connect(function()
+    frame.Visible = false
+    StarterGui:SetCore("SendNotification", {
+        Title = "Teleport GUI",
+        Text = "GUI hidden.",
+        Duration = 3
+    })
+end)
+
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0, 35)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.Text = "Teleport GUI V.11"
+title.Font = Enum.Font.GothamBlack
+title.TextScaled = true
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.BackgroundTransparency = 1
+
+task.spawn(function()
+    local hue = 0
+    while true do
+        hue = (hue + 0.01) % 1
+        local color = Color3.fromHSV(hue, 1, 1)
+        TweenService:Create(title, TweenInfo.new(0.2), {TextColor3 = color}):Play()
+        wait(0.05)
+    end
+end)
+
+local creatorLabel = Instance.new("TextLabel", frame)
+creatorLabel.Size = UDim2.new(1, 0, 0, 20)
+creatorLabel.Position = UDim2.new(0, 0, 1, -25)
+creatorLabel.BackgroundTransparency = 1
+creatorLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+creatorLabel.Font = Enum.Font.Gotham
+creatorLabel.TextSize = 14
+creatorLabel.Text = "Created by DenizCiftci"
+creatorLabel.TextStrokeTransparency = 0.8
+creatorLabel.TextScaled = false
+creatorLabel.TextWrapped = true
+creatorLabel.TextXAlignment = Enum.TextXAlignment.Center
+
+local successSound = Instance.new("Sound", frame)
+successSound.SoundId = "rbxassetid://12222030"
+successSound.Volume = 1
+
+local errorSound = Instance.new("Sound", frame)
+errorSound.SoundId = "rbxassetid://138087018"
+errorSound.Volume = 1
+
+local kickSound = Instance.new("Sound", frame)
+kickSound.SoundId = "rbxassetid://6026984224"
+kickSound.Volume = 1
+
+local nameBox = Instance.new("TextBox", frame)
+nameBox.Size = UDim2.new(0, 310, 0, 40)
+nameBox.Position = UDim2.new(0.5, -155, 0, 45)
+nameBox.PlaceholderText = "Enter Name"
+nameBox.Text = ""
+nameBox.Font = Enum.Font.Gotham
+nameBox.TextSize = 18
+nameBox.TextColor3 = Color3.new(1, 1, 1)
+nameBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+Instance.new("UICorner", nameBox).CornerRadius = UDim.new(0, 8)
+
+local tpButton = Instance.new("TextButton", frame)
+tpButton.Size = UDim2.new(0, 310, 0, 40)
+tpButton.Position = UDim2.new(0.5, -155, 0, 100)
+tpButton.Text = "Teleport to Player"
+tpButton.Font = Enum.Font.GothamBold
+tpButton.TextSize = 20
+tpButton.TextColor3 = Color3.new(1, 1, 1)
+tpButton.BackgroundColor3 = Color3.fromRGB(100, 200, 100)
+Instance.new("UICorner", tpButton).CornerRadius = UDim.new(0, 8)
+
+tpButton.MouseButton1Click:Connect(function()
+    local input = nameBox.Text:lower()
+
+    if input == "" then
+        errorSound:Play()
+        StarterGui:SetCore("SendNotification", {
+            Title = "⚠️ Error",
+            Text = "Please enter a name.",
+            Duration = 3
+        })
+        return
+    end
+
+    for _, word in pairs(badWords) do
+        if input:find(word) then
+            kickSound:Play()
+            StarterGui:SetCore("SendNotification", {
+                Title = "🚫 Inappropriate",
+                Text = "That word is not allowed!",
+                Duration = 2
+            })
+            wait(1.5)
+            player:Kick("You were kicked for using inappropriate language.")
+            return
+        end
+    end
+
+    if input == player.Name:lower() or input == player.DisplayName:lower() then
+        errorSound:Play()
+        StarterGui:SetCore("SendNotification", {
+            Title = "⛔ Invalid",
+            Text = "You cannot teleport to yourself.",
+            Duration = 3
+        })
+        return
+    end
+
+    local foundPlayer = nil
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= player then
+            local uname = p.Name:lower()
+            local dname = p.DisplayName:lower()
+            if uname:sub(1, #input) == input or dname:sub(1, #input) == input then
+                foundPlayer = p
+                break
+            end
+        end
+    end
+
+    if foundPlayer then
+        if foundPlayer.Character and foundPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local myChar = player.Character
+            if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                myChar.HumanoidRootPart.CFrame = foundPlayer.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
+                successSound:Play()
+                StarterGui:SetCore("SendNotification", {
+                    Title = "✅ Success",
+                    Text = "Teleported to "..foundPlayer.DisplayName.."!",
+                    Duration = 3
+                })
+            end
+        end
+    else
+        errorSound:Play()
+        StarterGui:SetCore("SendNotification", {
+            Title = "❌ Not Found",
+            Text = "No matching player found.",
+            Duration = 3
+        })
+    end
+end)
